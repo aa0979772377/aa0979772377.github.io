@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026 京阪 GOGO 電子手冊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <style>
+        :root {
+            --paper-color: #fdfbf7;
+            --paper-shadow: #d1d5db;
+            --book-spine: #1e3a8a;
+            --accent-gold: #b45309;
+            --text-main: #334155;
+            
+            /* 原始配色保留 */
+            --location-bg: #334155; 
+            --location-text: #f1f5f9;
+            --transit-bg: #f8fafc;
+            --transit-border: #3b82f6;
+            --wait-bg: #fffbeb; 
+            --wait-text: #92400e; 
+            --wait-border: #f59e0b; 
+        }
+
+        body {
+            background-color: #2c3e50;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2334495e' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            font-family: 'Noto Sans TC', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        /* --- 書本容器 --- */
+        .book-container {
+            width: 100%;
+            max-width: 500px; /* 手機版寬度 */
+            height: 90vh;
+            max-height: 850px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+        }
+
+        @media (min-width: 768px) {
+            .book-container {
+                max-width: 450px; /* 電腦版單頁寬度，若做雙頁可加寬 */
+            }
+        }
+
+        /* --- 頁面通用樣式 --- */
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: var(--paper-color);
+            border-radius: 4px 16px 16px 4px;
+            box-shadow: 
+                inset 10px 0 20px rgba(0,0,0,0.05), /* 書脊陰影 */
+                -2px 0 5px rgba(0,0,0,0.1), /* 左側厚度 */
+                5px 5px 15px rgba(0,0,0,0.2); /* 整體陰影 */
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 紙張紋理 */
+        .page::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 翻頁邏輯 */
+        .page.flipped {
+            transform: rotateY(-180deg);
+        }
+        .page.z-top { z-index: 10; }
+        .page.z-mid { z-index: 5; }
+        .page.z-bot { z-index: 1; }
+
+        /* --- 封面設計 --- */
+        .cover-page {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            border-left: 12px solid #1a253a; /* 書脊 */
+            border-radius: 6px 16px 16px 6px;
+        }
+        .cover-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 900;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            margin-top: 60px;
+        }
+        .cover-subtitle {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 300;
+            letter-spacing: 4px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 20px;
+        }
+        .cover-footer {
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        /* --- 內頁內容排版 --- */
+        .page-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            padding: 20px 20px 80px 20px; /* 底部留白給導航 */
+        }
+        
+        .day-header {
+            position: sticky;
+            top: 0;
+            background: rgba(253, 251, 247, 0.95);
+            backdrop-filter: blur(5px);
+            z-index: 20;
+            padding-bottom: 15px;
+            padding-top: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .day-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            line-height: 1;
+        }
+        .day-date {
+            font-family: 'Roboto Mono', monospace;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        /* --- 雜誌風時間軸 --- */
+        .timeline-wrapper {
+            position: relative;
+            padding-left: 15px;
+        }
+        /* 軸線 */
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 10px;
+            bottom: 0;
+            width: 2px;
+            background: #cbd5e1;
+            z-index: 0;
+        }
+
+        /* 行程項目 */
+        .itinerary-item {
+            position: relative;
+            margin-bottom: 24px;
+            padding-left: 50px;
+            z-index: 1;
+        }
+
+        /* 時間泡泡 */
+        .time-bubble {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50px;
+            text-align: center;
+        }
+        .time-text {
+            background: #fff;
+            padding: 2px 0;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* 節點圓點 */
+        .node-dot {
+            position: absolute;
+            left: 19px;
+            top: 28px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #64748b;
+            z-index: 2;
+        }
+
+        /* 卡片內容 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .card:active { transform: scale(0.98); }
+        
+        /* 類型樣式 */
+        .card.type-location { border-left: 4px solid var(--location-bg); }
+        .card.type-transit { border-left: 4px solid var(--transit-border); background: #f8fafc; }
+        .card.type-wait { border-left: 4px solid var(--wait-border); background: #fffbeb; border-top: 1px dashed #fcd34d; }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .card-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #1e293b;
+        }
+        .card-icon { font-size: 1.2rem; margin-right: 6px; }
+        .card-tag {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 99px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .tag-location { background: #e2e8f0; color: #475569; }
+        .tag-transit { background: #dbeafe; color: #1e40af; }
+        .tag-wait { background: #fef3c7; color: #92400e; }
+
+        .card-detail {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+        .card-note {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #e2e8f0;
+            font-size: 0.8rem;
+            color: #b45309;
+            font-weight: 500;
+        }
+        .transit-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+        }
+
+        /* --- 導航按鈕 --- */
+        .nav-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 50;
+            padding: 0 20px;
+        }
+        .nav-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-btn:disabled { background: #94a3b8; cursor: not-allowed; opacity: 0.5; }
+        .nav-btn:hover:not(:disabled) { transform: scale(1.1); background: #2563eb; }
+        
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        /* --- 記帳 Modal (保留原設計但美化) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: #fff;
+            width: 85%;
+            max-width: 360px;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        
+        /* 記帳紅點 */
+        .expense-dot {
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 8px; height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px white;
+        }
+
+        /* 雪花 */
+        .snowflake {
+            position: fixed;
+            color: #fff;
+            z-index: 999;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh); }
+        }
+
+        /* 封面標籤貼紙效果 */
+        .sticker {
+            background: #f1c40f;
+            color: #2c3e50;
+            padding: 5px 15px;
+            transform: rotate(-3deg);
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            font-family: 'Roboto Mono', monospace;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="snow-container"></div>
+
+    <!-- 書本主體 -->
+    <div class="book-container" id="book">
+        <!-- 頁面將由 JS 動態生成 -->
+    </div>
+
+    <!-- 導航控制列 (固定在螢幕下方，方便操作) -->
+    <div class="fixed bottom-6 left-0 right-0 flex justify-center gap-6 z-50 pointer-events-none">
+        <button id="prevBtn" class="nav-btn pointer-events-auto" onclick="flipPage(-1)"><i class="fas fa-chevron-left"></i></button>
+        <button class="nav-btn pointer-events-auto bg-amber-600 hover:bg-amber-700" onclick="showSummary()"><i class="fas fa-wallet"></i></button>
+        <button id="nextBtn" class="nav-btn pointer-events-auto" onclick="flipPage(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <!-- 記帳 Modal -->
+    <div id="expense-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title" class="text-lg font-bold mb-4 text-slate-800">活動名稱</h3>
+            <div class="mb-4">
+                <label class="block text-gray-500 text-xs font-bold mb-1">花費金額 (JPY)</label>
+                <input type="number" id="expense-amount" placeholder="輸入金額" class="w-full p-2 border border-gray-300 rounded font-mono text-lg focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-500 text-xs font-bold mb-2">分類</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="cat-btn border rounded p-2 text-xs hover:bg-gray-50" data-cat="交通" onclick="selectCategory(this)">🚌 交通</button>
+                    <button class="cat-btn border rounded p-2 text-xs hover:bg-gray-50" data-cat="餐費" onclick="selectCategory(this)">🍜 餐費</button>
+                    <button class="cat-btn border rounded p-2 text-xs hover:bg-gray-50" data-cat="購物" onclick="selectCategory(this)">🛍️ 購物</button>
+                    <button class="cat-btn border rounded p-2 text-xs hover:bg-gray-50" data-cat="景點" onclick="selectCategory(this)">⛩️ 景點</button>
+                    <button class="cat-btn border rounded p-2 text-xs hover:bg-gray-50" data-cat="其他" onclick="selectCategory(this)">📝 其他</button>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeExpenseModal()" class="px-4 py-2 text-gray-600 font-bold text-sm">取消</button>
+                <button onclick="saveCurrentExpense()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold text-sm shadow">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 統計 Modal -->
+    <div id="summary-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-black mb-4 text-slate-800 flex items-center gap-2"><i class="fas fa-chart-pie text-blue-500"></i> 旅費統計</h3>
+            <div id="summary-content" class="mb-6 space-y-2 text-sm"></div>
+            <div class="flex justify-end">
+                <button onclick="closeSummaryModal()" class="px-6 py-2 bg-slate-800 text-white rounded-full font-bold text-sm shadow-lg">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 行程資料 (完整移植) ---
+        const itineraryData = {
+            "Day1": [
+                { id: 'd1_1', time: '02:20', activity: '統聯客運（往桃園機場）', details: '02:01從台中站發車\n(預估抵達)朝馬站02:20 桃園機場04:20', transport: '客運', duration: '2hr ', type: '交通', dep_time: '02:20', arr_time: '04:20', dep_loc: '朝馬站', arr_loc: '桃園機場', note: '02:01從台中站發車' },
+                { id: 'd1_2', time: '04:20', activity: '桃園國際機場T2 報到', details: '中華航空C10156\n桃園8:05關西11:35', transport: '停留', duration: '3hr 45min', type: '彈性', dep_time: '04:20', arr_time: '08:05', dep_loc: '桃園機場', arr_loc: '登機口', note: '國際航班請預留充足時間報到/安檢' },
+                { id: 'd1_3', time: '08:05', activity: '中華航空CI0156 (飛往關西)', details: '桃園8:05關西11:35', transport: '飛機', duration: '3hr 30min', type: '交通', dep_time: '08:05', arr_time: '11:35', dep_loc: '桃園機場', arr_loc: '關西機場', note: '' },
+                { id: 'd1_4', time: '11:35', activity: '關西國際機場T1 出關', details: '約停留2hr出關\n(取行李時劃位0.5hr後的JR HARUKA)', transport: '停留', duration: '2hr 39min', type: '彈性', dep_time: '11:35', arr_time: '14:14', dep_loc: '機場', arr_loc: 'JR劃位', note: '記得劃位JR HARUKA' },
+                { id: 'd1_5', time: '14:14', activity: 'JR HARUKA (往京都)', details: '關西機場14:14 京都15:34', transport: 'JR', duration: '1hr 20min', type: '交通', dep_time: '14:14', arr_time: '15:34', dep_loc: '關西機場', arr_loc: '京都', note: '' },
+                { id: 'd1_6', time: '15:34', activity: '步行 (往地鐵烏丸線)', details: '步行5min到地鐵烏丸線', transport: '步行', duration: '5min', type: '交通', dep_time: '15:34', arr_time: '15:39', dep_loc: '京都車站', arr_loc: '地鐵入口', note: '' },
+                { id: 'd1_6_wait', time: '15:39', activity: '步行後等候 地鐵烏丸線', details: '等候緩衝時間 (預留 3 分鐘)', transport: '等待', duration: '3min', type: '彈性', dep_time: '15:39', arr_time: '15:42', dep_loc: '地鐵入口', arr_loc: '地鐵入口', note: '等待地鐵烏丸線15:42班次' },
+                { id: 'd1_7', time: '15:42', activity: '地鐵烏丸線 (往國際會館)', details: '京都15:42烏丸御池15:47', transport: '地鐵', duration: '5min', type: '交通', dep_time: '15:42', arr_time: '15:47', dep_loc: '京都', arr_loc: '烏丸御池', note: '' },
+                { id: 'd1_8', time: '15:47', activity: '步行 (往酒店)', details: '步行8min到京都御池insomnia酒店', transport: '步行', duration: '8min', type: '交通', dep_time: '15:47', arr_time: '15:55', dep_loc: '烏丸御池', arr_loc: '酒店', note: '' },
+                { id: 'd1_9', time: '15:55', activity: '京都御池insomnia酒店', details: 'Check-in辦理入住手續並稍作休息 30min', transport: '住宿', duration: '41min', type: '住宿', dep_time: '15:55', arr_time: '16:25', dep_loc: '酒店', arr_loc: '出發', note: 'Check-in後休息' },
+                { id: 'd1_9_walk', time: '16:25', activity: '步行 (往地鐵烏丸線)', details: '步行5min到地鐵烏丸線', transport: '步行', duration: '5min', type: '交通', dep_time: '16:25', arr_time: '16:30', dep_loc: '酒店', arr_loc: '烏丸御池站', note: '' },                    
+                { id: 'd1_10_wait', time: '16:30', activity: '步行後等候 地鐵烏丸線', details: '等候緩衝時間 (預留 6 分鐘)', transport: '等待', duration: '6min', type: '彈性', dep_time: '16:30', arr_time: '16:36', dep_loc: '烏丸御池', arr_loc: '烏丸御池', note: '等待地鐵烏丸線16:36 班次' },
+                { id: 'd1_10', time: '16:36', activity: '地鐵烏丸線 (往新田邊)', details: '烏丸御池16:36 五條16:40', transport: '地鐵', duration: '4min', type: '交通', dep_time: '16:36', arr_time: '16:40', dep_loc: '烏丸御池', arr_loc: '五條', note: '' },
+                { id: 'd1_11', time: '16:40', activity: '步行 (往五條天神宮)', details: '步行13min到五條天神宮', transport: '步行', duration: '15min', type: '交通', dep_time: '16:40', arr_time: '16:55', dep_loc: '五條', arr_loc: '天神宮', note: '' },
+                { id: 'd1_12', time: '16:55', activity: '五條天神宮', details: '參觀40min', transport: '停留', duration: '40min', type: '景點', dep_time: '16:55', arr_time: '17:35', dep_loc: '天神宮', arr_loc: '天神宮', note: '祈求平安 / 小巧精緻的神社' },
+                { id: 'd1_13', time: '17:35', activity: '步行 (往GU)', details: '步行20min到GU', transport: '步行', duration: '20min', type: '交通', dep_time: '17:35', arr_time: '17:55', dep_loc: '天神宮', arr_loc: 'GU', note: '' },
+                { id: 'd1_14', time: '17:55', activity: 'GU Kyōto-Yodobashi', details: '採購2hr ', transport: '停留', duration: '2hr ', type: '逛街', dep_time: '17:55', arr_time: '19:55', dep_loc: 'GU', arr_loc: 'GU', note: '採購服飾清單' },
+                { id: 'd1_15_walk', time: '19:55', activity: '步行 (往京都塔)', details: '步行5min到京都塔', transport: '步行', duration: '5min', type: '交通', dep_time: '19:55', arr_time: '20:00', dep_loc: 'GU', arr_loc: '京都塔', note: '' },
+                { id: 'd1_15', time: '20:00', activity: '京都塔', details: '拍照10min', transport: '停留', duration: '10min', type: '景點', dep_time: '20:00', arr_time: '20:10', dep_loc: '京都塔', arr_loc: '京都塔', note: '欣賞夜景' },
+                { id: 'd1_16_walk', time: '20:10', activity: '步行 (往炸牛排 京都勝牛)', details: '步行5min到京都勝牛', transport: '步行', duration: '5min', type: '交通', dep_time: '20:10', arr_time: '20:15', dep_loc: '京都塔', arr_loc: '京都勝牛', note: '' },
+                { id: 'd1_16', time: '20:15', activity: '炸牛排 京都勝牛', details: '晚餐1hr ', transport: '停留', duration: '1hr ', type: '吃飯', dep_time: '20:15', arr_time: '21:15', dep_loc: '京都勝牛', arr_loc: '京都勝牛', note: '人氣炸牛排 / 預計用餐1hr' },
+                { id: 'd1_17_walk', time: '21:15', activity: '步行 (往地鐵烏丸線)', details: '步行5min到地鐵烏丸線', transport: '步行', duration: '5min', type: '交通', dep_time: '21:15', arr_time: '21:20', dep_loc: '京都勝牛', arr_loc: '京都車站', note: '' },
+                { id: 'd1_17_wait', time: '21:20', activity: '步行後等候 地鐵烏丸線', details: '等候緩衝時間 (預留 6分鐘)', transport: '等待', duration: '4min', type: '彈性', dep_time: '21:20', arr_time: '21:26', dep_loc: '京都車站', arr_loc: '京都車站', note: '等待地鐵烏丸線21:26班次' },
+                { id: 'd1_17', time: '21:26', activity: '地鐵烏丸線 (往國際會館)', details: '京都21:26 烏丸御池21:31', transport: '地鐵', duration: '5min', type: '交通', dep_time: '21:26', arr_time: '21:31', dep_loc: '京都', arr_loc: '烏丸御池', note: '' },
+                { id: 'd1_18', time: '21:31', activity: '步行 (回酒店)', details: '步行8min到京都御池insomnia酒店', transport: '步行', duration: '8min', type: '交通', dep_time: '21:31', arr_time: '21:39', dep_loc: '烏丸御池', arr_loc: '酒店', note: '' },
+                { id: 'd1_19', time: '21:40', activity: '京都御池insomnia酒店', details: '回到酒店休息/自由活動', transport: '住宿', duration: 'N/A', type: '住宿', dep_time: '21:40', arr_time: 'N/A', dep_loc: '酒店', arr_loc: 'N/A', note: '結束 Day 1' },
+            ],
+            "Day2": [
+                { id: 'd2_0', time: '06:00', activity: '京都御池insomnia酒店', details: '早上從酒店出發', transport: '住宿', duration: '0min', type: '住宿', dep_time: '06:00', arr_time: '06:00', dep_loc: '酒店', arr_loc: '酒店', note: '開始 Day 2' },
+                { id: 'd2_0_walk', time: '06:00', activity: '步行 (往地鐵東西線)', details: '步行5min到地鐵東西線', transport: '步行', duration: '5min', type: '交通', dep_time: '06:00', arr_time: '06:05', dep_loc: '酒店', arr_loc: '地鐵站', note: '' },
+                { id: 'd2_0_wait', time: '06:05', activity: '步行後等候 地鐵東西線', details: '等候緩衝時間 (預留 6 分鐘)', transport: '等待', duration: '6min', type: '彈性', dep_time: '06:05', arr_time: '06:11', dep_loc: '地鐵站', arr_loc: '地鐵站', note: '等待地鐵東西線06:11班次' },
+                { id: 'd2_1', time: '06:11', activity: '地鐵東西線 (往太秦天神川)', details: '烏丸御池06:11 二條06:15', transport: '地鐵', duration: '4min', type: '交通', dep_time: '06:11', arr_time: '06:15', dep_loc: '烏丸御池', arr_loc: '二條', note: '早起前往嵐山避人潮' },
+                { id: 'd2_1_wait', time: '06:15', activity: '轉乘及等候 JR 嵯峨野線', details: '地鐵抵達二條站，等候 06:30 的 JR 嵯峨野線', transport: '等待', duration: '15min', type: '彈性', dep_time: '06:15', arr_time: '06:30', dep_loc: '二條', arr_loc: '二條', note: '轉乘JR嵯峨野線06:30班次' },
+                { id: 'd2_2', time: '06:30', activity: 'JR嵯峨野線 (往龜岡)', details: '二條06:30 嵯峨嵐山06:39', transport: 'JR', duration: '9min', type: '交通', dep_time: '06:30', arr_time: '06:39', dep_loc: '二條', arr_loc: '嵯峨嵐山', note: '' },
+                { id: 'd2_3_walk', time: '06:39', activity: '步行 (往竹林小徑)', details: '步行15min到嵐山竹林', transport: '步行', duration: '16min', type: '交通', dep_time: '06:39', arr_time: '06:55', dep_loc: '嵯峨嵐山', arr_loc: '竹林小徑', note: '' },
+                { id: 'd2_4', time: '06:55', activity: '嵐山竹林小徑', details: '停留1hr ', transport: '停留', duration: '1hr ', type: '景點', dep_time: '06:55', arr_time: '07:55', dep_loc: '竹林小徑', arr_loc: '竹林小徑', note: '享受清晨寧靜 / 避開人群' },
+                { id: 'd2_5_walk', time: '07:55', activity: '步行 (往御髪神社)', details: '從竹林步行至御髪神社 (約5-10min)', transport: '步行', duration: '5min', type: '交通', dep_time: '07:55', arr_time: '08:00', dep_loc: '竹林小徑', arr_loc: '御髪神社', note: '' },
+                { id: 'd2_5', time: '08:00', activity: '御髪神社', details: '參觀20min', transport: '停留', duration: '20min', type: '景點', dep_time: '08:00', arr_time: '08:20', dep_loc: '御髪神社', arr_loc: '御髪神社', note: '日本唯一的頭髮神社' },
+                { id: 'd2_6_walk', time: '08:20', activity: '步行 (往野宮神社)', details: '步行10min到野宮神社', transport: '步行', duration: '10min', type: '交通', dep_time: '08:20', arr_time: '08:30', dep_loc: '御髪神社', arr_loc: '野宮神社', note: '' },
+                { id: 'd2_6', time: '08:30', activity: '野宮神社', details: '參觀30min', transport: '停留', duration: '30min', type: '景點', dep_time: '08:30', arr_time: '09:00', dep_loc: '野宮神社', arr_loc: '野宮神社', note: '祈求良緣' },
+                { id: 'd2_7_walk', time: '09:00', activity: '步行 (往天龍寺)', details: '步行5min到天龍寺', transport: '步行', duration: '5min', type: '交通', dep_time: '09:00', arr_time: '09:05', dep_loc: '野宮神社', arr_loc: '天龍寺', note: '' },
+                { id: 'd2_7', time: '09:05', activity: '天龍寺', details: '參觀1.5hr\n世界遺產曹源池庭園', transport: '停留', duration: '1hr 30min', type: '景點', dep_time: '09:05', arr_time: '10:35', dep_loc: '天龍寺', arr_loc: '天龍寺', note: '世界遺產' },
+                { id: 'd2_8_walk', time: '10:35', activity: '步行 (往渡月橋)', details: '步行10min到渡月橋', transport: '步行', duration: '10min', type: '交通', dep_time: '10:35', arr_time: '10:45', dep_loc: '天龍寺', arr_loc: '渡月橋', note: '' },
+                { id: 'd2_8', time: '10:45', activity: '渡月橋', details: '停留1hr \n拍照打卡熱點', transport: '停留', duration: '1hr ', type: '景點', dep_time: '10:45', arr_time: '11:45', dep_loc: '渡月橋', arr_loc: '渡月橋', note: '嵐山地標' },
+                { id: 'd2_9_walk', time: '11:45', activity: '步行 (往JR 嵯峨野線)', details: '步行15min到JR 嵯峨野線', transport: '步行', duration: '15min', type: '交通', dep_time: '11:45', arr_time: '12:00', dep_loc: '渡月橋', arr_loc: '嵯峨嵐山', note: '' },
+                { id: 'd2_1_wait', time: '12:00', activity: '步行後等候 JR 嵯峨野線', details: '等候12:17的 JR 嵯峨野線', transport: '等待', duration: '17min', type: '彈性', dep_time: '12:00', arr_time: '12:17', dep_loc: '嵯峨嵐山', arr_loc: '嵯峨嵐山', note: '轉乘JR嵯峨野線12:17班次' },
+                { id: 'd2_9', time: '12:17', activity: 'JR嵯峨野線 (往京都)', details: '嵯峨嵐山12:17 二條12:26', transport: 'JR', duration: '9min', type: '交通', dep_time: '12:17', arr_time: '12:26', dep_loc: '嵯峨嵐山', arr_loc: '二條', note: '' },
+                { id: 'd2_10', time: '12:26', activity: '步行 (往二條城)', details: '步行9min', transport: '步行', duration: '9min', type: '交通', dep_time: '12:26', arr_time: '12:35', dep_loc: '二條站', arr_loc: '二條城', note: '' },
+                { id: 'd2_11', time: '12:35', activity: '二條城', details: '停留1.5hr\n參觀德川幕府大政奉還處', transport: '停留', duration: '1hr 30min', type: '景點', dep_time: '12:35', arr_time: '14:05', dep_loc: '二條城', arr_loc: '二條城', note: '德川幕府歷史遺址' },
+                { id: 'd2_12_walk', time: '14:05', activity: '步行 (往地鐵東西線)', details: '步行8min到地鐵東西線', transport: '步行', duration: '8min', type: '交通', dep_time: '14:05', arr_time: '14:13', dep_loc: '二條城', arr_loc: '二條城前', note: '' },
+                { id: 'd2_12_wait', time: '14:13', activity: '步行後等候 地鐵東西線', details: '等候緩衝時間 (預留 8 分鐘)', transport: '等待', duration: '8min', type: '彈性', dep_time: '14:13', arr_time: '14:21', dep_loc: '二條城前', arr_loc: '二條城前', note: '等待地鐵東西線14:21班次' },
+                { id: 'd2_12', time: '14:21', activity: '地鐵東西線 (往六地藏)', details: '二條城前14:21 三條京阪14:26', transport: '地鐵', duration: '5min', type: '交通', dep_time: '14:21', arr_time: '14:26', dep_loc: '二條城前', arr_loc: '三條京阪', note: '' },
+                { id: 'd2_13', time: '14:26', activity: '步行 (往花見小路)', details: '步行9min到花見小路', transport: '步行', duration: '9min', type: '交通', dep_time: '14:26', arr_time: '14:35', dep_loc: '三條京阪', arr_loc: '花見小路', note: '' },
+                { id: 'd2_14', time: '14:35', activity: '花見小路', details: '停留50min\n運氣好可以看到藝伎', transport: '停留', duration: '50min', type: '景點', dep_time: '14:35', arr_time: '15:25', dep_loc: '花見小路', arr_loc: '花見小路', note: '尋找藝伎的蹤影' },
+                { id: 'd2_15_walk', time: '15:25', activity: '步行 (往祇園白川)', details: '步行5min到祇園白川', transport: '步行', duration: '5min', type: '交通', dep_time: '15:25', arr_time: '15:30', dep_loc: '花見小路', arr_loc: '祇園白川', note: '' },
+                { id: 'd2_15', time: '15:30', activity: '祇園白川', details: '停留 50min', transport: '停留', duration: '50min', type: '景點', dep_time: '15:30', arr_time: '16:20', dep_loc: '祇園白川', arr_loc: '祇園白川', note: '京都小橋流水景觀' },
+                { id: 'd2_16_walk', time: '16:20', activity: '步行 (往八坂神社)', details: '步行10min到八坂神社', transport: '步行', duration: '10min', type: '交通', dep_time: '16:20', arr_time: '16:30', dep_loc: '祇園白川', arr_loc: '八坂神社', note: '' },
+                { id: 'd2_16', time: '16:30', activity: '京都八坂神社', details: '參觀1.5hr', transport: '停留', duration: '1hr 30min', type: '景點', dep_time: '16:30', arr_time: '18:00', dep_loc: '八坂神社', arr_loc: '八坂神社', note: '京都三大祭典之一' },
+                { id: 'd2_17_walk', time: '18:00', activity: '步行 (往麵屋 豬一)', details: '步行20min到豬一', transport: '步行', duration: '20min', type: '交通', dep_time: '18:00', arr_time: '18:20', dep_loc: '八坂神社', arr_loc: '麵屋豬一', note: '' },
+                { id: 'd2_17', time: '18:20', activity: '麵屋 豬一', details: '晚餐1hr \n人氣排隊名店', transport: '停留', duration: '1hr ', type: '吃飯', dep_time: '18:20', arr_time: '19:20', dep_loc: '麵屋 豬一', arr_loc: '麵屋 豬一', note: '人氣拉麵 / 提前排隊' },
+                { id: 'd2_18_walk', time: '19:20', activity: '步行 (回酒店)', details: '步行28min到京都御池insomnia酒店', transport: '步行', duration: '28min', type: '交通', dep_time: '19:20', arr_time: '19:48', dep_loc: '麵屋豬一', arr_loc: '酒店', note: '' },
+                { id: 'd2_18', time: '19:50', activity: '京都御池insomnia酒店', details: '回到酒店休息/自由活動', transport: '住宿', duration: 'N/A', type: '住宿', dep_time: '19:50', arr_time: 'N/A', dep_loc: '酒店', arr_loc: 'N/A', note: '結束 Day 2' },
+            ],
+            "Day3": [
+                { id: 'd3_0_start', time: '05:00', activity: '京都御池insomnia酒店', details: '早上從酒店出發', transport: '住宿', duration: '0min', type: '住宿', dep_time: '05:00', arr_time: '05:00', dep_loc: '酒店', arr_loc: '酒店', note: '開始 Day 3' },
+                { id: 'd3_0_taxi', time: '05:00', activity: '計程車 (往二寧坂)', details: '計程車 10min到二年坂', transport: '計程車', duration: '10min', type: '交通', dep_time: '05:00', arr_time: '05:10', dep_loc: '酒店', arr_loc: '二年坂', note: '建議搭乘計程車' },
+                { id: 'd3_1', time: '05:10', activity: '二寧坂(二年坂)', details: '停留20min', transport: '停留', duration: '20min', type: '景點', dep_time: '05:10', arr_time: '05:30', dep_loc: '二年坂', arr_loc: '二年坂', note: '清晨限定 / 避開人潮' },
+                { id: 'd3_2_walk', time: '05:30', activity: '步行 (往三年坂)', details: '步行5min三年坂', transport: '步行', duration: '5min', type: '交通', dep_time: '05:30', arr_time: '05:35', dep_loc: '二年坂', arr_loc: '三年坂', note: '' },
+                { id: 'd3_2', time: '05:35', activity: '產寧坂(三年坂)', details: '停留20min', transport: '停留', duration: '20min', type: '景點', dep_time: '05:35', arr_time: '05:55', dep_loc: '三年坂', arr_loc: '三年坂', note: '摔倒有三年內厄運的傳說' },
+                { id: 'd3_3_walk', time: '05:55', activity: '步行 (往清水寺)', details: '步行10min到清水寺', transport: '步行', duration: '10min', type: '交通', dep_time: '05:55', arr_time: '06:05', dep_loc: '三年坂', arr_loc: '清水寺', note: '' },
+                { id: 'd3_3', time: '06:05', activity: '清水寺', details: '參觀2hr', transport: '停留', duration: '2hr', type: '景點', dep_time: '06:05', arr_time: '08:05', dep_loc: '清水寺', arr_loc: '清水寺', note: '早上較少人 / 國寶清水舞台' },
+                { id: 'd3_4_walk', time: '08:05', activity: '步行 (往京阪本線)', details: '步行20min到京阪本線', transport: '步行', duration: '20min', type: '交通', dep_time: '08:05', arr_time: '08:25', dep_loc: '清水寺', arr_loc: '清水五條', note: '' },
+                { id: 'd3_4_wait', time: '08:25', activity: '步行後等候 京阪本線', details: '等候緩衝時間 (預留 12 分鐘)', transport: '等待', duration: '12min', type: '彈性', dep_time: '08:25', arr_time: '08:37', dep_loc: '清水五條', arr_loc: '清水五條', note: '等待京阪本線08:37班次' },
+                { id: 'd3_4', time: '08:37', activity: '京阪本線 準急行 (往淀屋橋)', details: '清水五條08:37 伏見稻荷08:44', transport: '電車', duration: '7min', type: '交通', dep_time: '08:37', arr_time: '08:44', dep_loc: '清水五條', arr_loc: '伏見稻荷', note: '搭乘京阪本線' },
+                { id: 'd3_5', time: '08:44', activity: '步行 (往伏見稻荷大社)', details: '步行6min到伏見稻荷大社', transport: '步行', duration: '6min', type: '交通', dep_time: '08:44', arr_time: '08:50', dep_loc: '伏見稻荷', arr_loc: '大社', note: '' },
+                { id: 'd3_6', time: '08:50', activity: '伏見稻荷大社', details: '參觀1.5hr', transport: '停留', duration: '1hr 30min', type: '景點', dep_time: '08:50', arr_time: '10:20', dep_loc: '伏見稻荷大社', arr_loc: '伏見稻荷大社', note: '必拍千本鳥居' },
+                { id: 'd3_7_walk', time: '10:20', activity: '步行 (往JR奈良線)', details: '步行5min到JR奈良線', transport: '步行', duration: '5min', type: '交通', dep_time: '10:20', arr_time: '10:25', dep_loc: '伏見稻荷大社', arr_loc: '稻荷', note: '' },
+                { id: 'd3_7_wait', time: '10:25', activity: '步行後等候 JR奈良線', details: '等候緩衝時間 (預留 10 分鐘)', transport: '等待', duration: '10min', type: '彈性', dep_time: '10:25', arr_time: '10:35', dep_loc: '稻荷', arr_loc: '稻荷', note: '等待JR奈良線10:35班次' },
+                { id: 'd3_7', time: '10:35', activity: 'JR奈良線 (往奈良)', details: '稻荷10:35宇治10:52', transport: 'JR', duration: '17min', type: '交通', dep_time: '10:35', arr_time: '10:52', dep_loc: '稻荷', arr_loc: '宇治', note: '' },
+                { id: 'd3_8', time: '10:52', activity: '步行 (往中村藤吉)', details: '步行8min到中村藤吉本店', transport: '步行', duration: '8min', type: '交通', dep_time: '10:52', arr_time: '11:00', dep_loc: '宇治站', arr_loc: '中村藤吉', note: '' },
+                { id: 'd3_9', time: '11:00', activity: '中村藤吉本店 宇治店', details: '午餐1hr (必吃抹茶)', transport: '停留', duration: '1hr', type: '吃飯', dep_time: '11:00', arr_time: '12:00', dep_loc: '中村藤吉', arr_loc: '中村藤吉', note: '必吃抹茶甜點' },
+                { id: 'd3_10_walk', time: '12:00', activity: '步行 (往平等院鳳凰堂)', details: '步行10min到鳳凰堂', transport: '步行', duration: '10min', type: '交通', dep_time: '12:00', arr_time: '12:10', dep_loc: '中村藤吉', arr_loc: '鳳凰堂', note: '' },
+                { id: 'd3_10', time: '12:10', activity: '平等院鳳凰堂', details: '參觀1.5hr', transport: '停留', duration: '1hr 30min', type: '景點', dep_time: '12:10', arr_time: '13:40', dep_loc: '鳳凰堂', arr_loc: '鳳凰堂', note: '十元硬幣上的圖案' },
+                { id: 'd3_11_walk', time: '13:40', activity: '步行 (往宇治神社)', details: '步行10min到宇治神社', transport: '步行', duration: '10min', type: '交通', dep_time: '13:40', arr_time: '13:50', dep_loc: '鳳凰堂', arr_loc: '宇治神社', note: '' },
+                { id: 'd3_11', time: '13:50', activity: '宇治神社(兔子神社)', details: '參觀40min', transport: '停留', duration: '40min', type: '景點', dep_time: '13:50', arr_time: '14:30', dep_loc: '宇治神社', arr_loc: '宇治神社', note: '充滿兔子元素的可愛神社' },
+                { id: 'd3_12_walk', time: '14:30', activity: '步行 (往宇治上神社)', details: '步行5min到宇治上神社', transport: '步行', duration: '5min', type: '交通', dep_time: '14:30', arr_time: '14:35', dep_loc: '宇治神社', arr_loc: '宇治上神社', note: '' },
+                { id: 'd3_12', time: '14:35', activity: '宇治上神社', details: '參觀40min\n世界遺產 / 日本現存最古老的神社建築', transport: '停留', duration: '40min', type: '景點', dep_time: '14:35', arr_time: '15:15', dep_loc: '宇治上神社', arr_loc: '宇治上神社', note: '世界遺產' },
+                { id: 'd3_13_walk', time: '15:15', activity: '步行 (往京阪宇治線)', details: '步行10min到京阪宇治線', transport: '步行', duration: '10min', type: '交通', dep_time: '15:15', arr_time: '15:25', dep_loc: '宇治上神社', arr_loc: '宇治站', note: '' },
+                { id: 'd3_13_wait_2', time: '15:25', activity: '步行後等候 京阪宇治線', details: '等候緩衝時間 (預留 5 分鐘)', transport: '等待', duration: '5min', type: '彈性', dep_time: '15:25', arr_time: '15:30', dep_loc: '宇治站', arr_loc: '宇治站', note: '等待京阪宇治線15:30班次' },
+                { id: 'd3_13', time: '15:30', activity: '京阪宇治線 (往中書島)', details: '宇治15:30 中書島15:56', transport: '電車', duration: '26min', type: '交通', dep_time: '15:30', arr_time: '15:56', dep_loc: '宇治', arr_loc: '中書島', note: '' },
+                // V20 新增：等待京阪本線 (6min)
+                { id: 'd3_13_wait', time: '15:56', activity: '轉乘及等候 京阪本線', details: '抵達中書島，等候 16:02 的特急列車', transport: '等待', duration: '6min', type: '彈性', dep_time: '16:56', arr_time: '16:02', dep_loc: '中書島', arr_loc: '中書島', note: '轉乘京阪本線16:02班次' },
+                { id: 'd3_14', time: '16:02', activity: '京阪本線 特急 (往出町柳)', details: '中書島16:02 祇園四條16:13', transport: '電車', duration: '11min', type: '交通', dep_time: '16:02', arr_time: '16:13', dep_loc: '中書島', arr_loc: '祇園四條', note: '一般特急不需要額外費用' },
+                { id: 'd3_15', time: '16:13', activity: '步行 (往錦市場)', details: '步行12min到錦市場', transport: '步行', duration: '12min', type: '交通', dep_time: '16:13', arr_time: '16:25', dep_loc: '祇園四條', arr_loc: '錦市場', note: '' },
+                { id: 'd3_16', time: '16:25', activity: '錦市場', details: '逛街+晚餐2hr \n京都的廚房', transport: '停留', duration: '2hr ', type: '逛街', dep_time: '16:25', arr_time: '18:25', dep_loc: '錦市場', arr_loc: '錦市場', note: '邊走邊吃 / 京都的廚房' },
+                { id: 'd3_17_walk', time: '18:25', activity: '步行 (往弁慶石)', details: '步行10min到弁慶石', transport: '步行', duration: '10min', type: '交通', dep_time: '18:25', arr_time: '18:35', dep_loc: '錦市場', arr_loc: '弁慶石', note: '' },
+                { id: 'd3_17', time: '18:35', activity: '弁慶石', details: '拍照10min', transport: '停留', duration: '15min', type: '景點', dep_time: '18:35', arr_time: '18:45', dep_loc: '弁慶石', arr_loc: '弁慶石', note: '歷史地標 / 義經公與弁慶的傳說' },
+                { id: 'd3_18_walk', time: '18:45', activity: '步行 (回酒店)', details: '步行15min到京都御池insomnia酒店', transport: '步行', duration: '15min', type: '交通', dep_time: '18:45', arr_time: '19:00', dep_loc: '弁慶石', arr_loc: '酒店', note: '' },
+                { id: 'd3_18', time: '19:00', activity: '京都御池insomnia酒店', details: '回到酒店休息/自由活動', transport: '住宿', duration: 'N/A', type: '住宿', dep_time: '19:00', arr_time: 'N/A', dep_loc: '酒店', arr_loc: 'N/A', note: '結束 Day 3' },
+            ],
+            "Day4": [
+                // --- 早晨出發 (08:00 - 08:43) ---
+                { id: 'd4_0', time: '08:00', activity: '京都御池insomnia酒店', details: '辦理退房手續並寄放行李，準備出發', transport: '住宿', duration: '0min', type: '住宿', dep_time: '08:00', arr_time: '08:00', dep_loc: '酒店', arr_loc: '酒店', note: '開始 Day 4 / 寄放行李' },
+                
+                { id: 'd4_0_walk', time: '08:00', activity: '步行 (往地鐵烏丸線)', details: '步行5min到地鐵烏丸線', transport: '步行', duration: '5min', type: '交通', dep_time: '08:00', arr_time: '08:05', dep_loc: '酒店', arr_loc: '烏丸御池站', note: '' },
+                
+                { id: 'd4_0_wait', time: '08:05', activity: '步行後等候 地鐵烏丸線', details: '等候緩衝時間 (預留 8 分鐘)', transport: '等待', duration: '8min', type: '彈性', dep_time: '08:05', arr_time: '08:13', dep_loc: '烏丸御池', arr_loc: '烏丸御池', note: '等待地鐵烏丸線08:13 班次' },
+
+                { id: 'd4_1', time: '08:13', activity: '地鐵烏丸線 (往國際會館)', details: '烏丸御池08:13 北大路08:19', transport: '地鐵', duration: '6min', type: '交通', dep_time: '08:13', arr_time: '08:19', dep_loc: '烏丸御池', arr_loc: '北大路', note: '' },
+
+                { id: 'd4_2_walk', time: '08:19', activity: '步行轉乘 (往巴士總站)', details: '步行2min到北大路巴士總站', transport: '步行', duration: '2min', type: '交通', dep_time: '08:19', arr_time: '08:21', dep_loc: '北大路站', arr_loc: '巴士總站', note: '' },
+
+                { id: 'd4_2_wait', time: '08:21', activity: '等候 205/204 City Bus', details: '等候 08:28 班次', transport: '等待', duration: '7min', type: '彈性', dep_time: '08:21', arr_time: '08:28', dep_loc: '巴士總站', arr_loc: '巴士總站', note: '等待205 City Bus 08:28班次<br>E搭乘處(205) / G搭乘處(204)' },
+
+                { id: 'd4_2', time: '08:28', activity: '205 City Bus (往西大路七條、京都站)', details: '北大路巴士總站08:28 金閣寺道08:39', transport: '公車', duration: '11min', type: '交通', dep_time: '08:28', arr_time: '08:39', dep_loc: '北大路', arr_loc: '金閣寺道', note: 'OR 204 City Bus (往北大路通、金閣寺、西之京圓町）<br> E搭乘處(205) OR G搭乘處(204)' },
+
+                { id: 'd4_3_walk', time: '08:39', activity: '步行 (往金閣寺)', details: '步行4min到金閣寺', transport: '步行', duration: '4min', type: '交通', dep_time: '08:39', arr_time: '08:43', dep_loc: '金閣寺道', arr_loc: '金閣寺', note: '' },
+
+                // --- 金閣寺區域 (修正處) ---
+                { 
+                    id: 'd4_3', 
+                    time: '09:00', 
+                    activity: '金閣寺', 
+                    details: '抵達時間08:43，營業時間09:00\n參觀2hr ', 
+                    transport: '停留', 
+                    duration: '2hr ', // 09:00 到 11:00
+                    type: '景點', 
+                    dep_time: '09:00', 
+                    arr_time: '11:00', 
+                    dep_loc: '金閣寺', 
+                    arr_loc: '金閣寺', 
+                    note: '正式開放時間是09:00' 
+                },
+
+                { 
+                    id: 'd4_4_walk', 
+                    time: '11:00', 
+                    activity: '步行 (往公車站)', 
+                    details: '步行4min到公車站', 
+                    transport: '步行', 
+                    duration: '4min', 
+                    type: '交通', 
+                    dep_time: '11:00', 
+                    arr_time: '11:04', 
+                    dep_loc: '金閣寺', 
+                    arr_loc: '金閣寺道', 
+                    note: '' 
+                },
+                
+                { 
+                    id: 'd4_4_wait', 
+                    time: '11:04', 
+                    activity: '步行後等候 205 City Bus', 
+                    details: '等候緩衝時間 (預留 4 分鐘)', 
+                    transport: '等待', 
+                    duration: '4min', 
+                    type: '彈性', 
+                    dep_time: '11:04', 
+                    arr_time: '11:08', 
+                    dep_loc: '金閣寺道', 
+                    arr_loc: '金閣寺道', 
+                    note: '等待205 City Bus 11:08 班次' 
+                },
+
+                { 
+                    id: 'd4_4', 
+                    time: '11:08', 
+                    activity: '205 City Bus (往洛北高校、京都站)', 
+                    details: '金閣寺道11:08 下鴨神社前11:28', 
+                    transport: '公車', 
+                    duration: '20min', 
+                    type: '交通', 
+                    dep_time: '11:08', 
+                    arr_time: '11:28', 
+                    dep_loc: '金閣寺道', 
+                    arr_loc: '下鴨神社前', 
+                    note: 'C乘車處' 
+                },
+
+                // --- 下鴨神社區域 (後續行程時間未變，只需接續) ---
+                { id: 'd4_5', time: '11:30', activity: '賀茂御祖神社 (下鴨神社)', details: '參觀1hr', transport: '停留', duration: '1hr', type: '景點', dep_time: '11:30', arr_time: '12:30', dep_loc: '下鴨神社', arr_loc: '下鴨神社', note: '世界遺產<br>相生社可購買戒指御守<br>除了主殿商店外 周邊的兩三間商店可以買到其他季節御守（雜太社旁商店）' },
+
+                { id: 'd4_6_walk', time: '12:30', activity: '步行 (往河合神社)', details: '步行5min到河合神社', transport: '步行', duration: '5min', type: '交通', dep_time: '12:30', arr_time: '12:35', dep_loc: '下鴨神社', arr_loc: '河合神社', note: '' },
+
+                { id: 'd4_6', time: '12:35', activity: '河合神社', details: '參觀15min', transport: '停留', duration: '15min', type: '景點', dep_time: '12:35', arr_time: '12:50', dep_loc: '河合神社', arr_loc: '河合神社', note: '機動行程看時間刪減 / 祈求美麗的神社' },
+
+                { id: 'd4_7_walk', time: '12:50', activity: '步行 (往鴨川三角洲)', details: '步行8min到鴨川三角洲', transport: '步行', duration: '8min', type: '交通', dep_time: '12:50', arr_time: '12:58', dep_loc: '河合神社', arr_loc: '鴨川三角洲', note: '' },
+
+                { id: 'd4_7', time: '13:00', activity: '鴨川三角洲', details: '散步30min', transport: '停留', duration: '30min', type: '景點', dep_time: '13:00', arr_time: '13:30', dep_loc: '鴨川三角洲', arr_loc: '鴨川三角洲', note: '跳烏龜石 / 適合放鬆' },
+
+                // --- 移動回酒店取行李 ---
+                { id: 'd4_8_walk', time: '13:30', activity: '步行 (往京阪本線)', details: '步行6min到京阪本線', transport: '步行', duration: '6min', type: '交通', dep_time: '13:30', arr_time: '13:36', dep_loc: '鴨川三角洲', arr_loc: '出柳町', note: '' },
+                
+                { id: 'd4_8_wait', time: '13:36', activity: '步行後等候 京阪本線', details: '等候緩衝時間 (預留 3 分鐘)', transport: '等待', duration: '3min', type: '彈性', dep_time: '13:36', arr_time: '13:39', dep_loc: '出柳町', arr_loc: '出柳町', note: '等待京阪本線13:39 班次' },
+
+                { id: 'd4_8', time: '13:39', activity: '京阪本線 準急行 (往淀屋橋)', details: '出柳町13:39 三條13:43', transport: '電車', duration: '4min', type: '交通', dep_time: '13:39', arr_time: '13:43', dep_loc: '出柳町', arr_loc: '三條', note: '' },
+
+                { id: 'd4_9_walk', time: '13:43', activity: '步行轉乘 (往地鐵東西線)', details: '步行6min轉乘', transport: '步行', duration: '6min', type: '交通', dep_time: '13:43', arr_time: '13:49', dep_loc: '三條', arr_loc: '三條京阪', note: '' },
+                
+                { id: 'd4_9_wait', time: '13:49', activity: '步行後等候 地鐵東西線', details: '等候緩衝時間 (預留 10 分鐘)', transport: '等待', duration: '10min', type: '彈性', dep_time: '13:49', arr_time: '13:59', dep_loc: '三條京阪', arr_loc: '三條京阪', note: '等待地鐵東西線13:59 班次' },
+
+                { id: 'd4_10', time: '13:59', activity: '地鐵東西線 (往太秦天神川)', details: '三條京阪13:59 烏丸御池14:02', transport: '地鐵', duration: '3min', type: '交通', dep_time: '13:59', arr_time: '14:02', dep_loc: '三條京阪', arr_loc: '烏丸御池', note: '' },
+
+                { id: 'd4_11', time: '14:02', activity: '步行 (往酒店拿行李)', details: '步行5min到京都御池insomnia酒店', transport: '步行', duration: '8min', type: '交通', dep_time: '14:02', arr_time: '14:10', dep_loc: '烏丸御池', arr_loc: '酒店', note: '' },
+
+                { id: 'd4_12', time: '14:10', activity: '京都御池insomnia酒店', details: '領取寄放的行李並準備前往大阪', transport: '住宿', duration: '10min', type: '住宿', dep_time: '14:10', arr_time: '14:20', dep_loc: '酒店', arr_loc: '酒店', note: '準備移動到大阪' },
+
+                // --- 移動到大阪 ---
+                { id: 'd4_13_walk', time: '14:20', activity: '步行 (往地鐵烏丸線)', details: '步行10min到地鐵烏丸線', transport: '步行', duration: '10min', type: '交通', dep_time: '14:20', arr_time: '14:30', dep_loc: '酒店', arr_loc: '烏丸御池', note: '' },
+                
+                { id: 'd4_13_wait', time: '14:30', activity: '步行後等候 地鐵烏丸線', details: '等候緩衝時間 (預留 6 分鐘)', transport: '等待', duration: '6min', type: '彈性', dep_time: '14:30', arr_time: '14:36', dep_loc: '烏丸御池', arr_loc: '烏丸御池', note: '等待地鐵烏丸線14:36 班次' },
+
+                { id: 'd4_13', time: '14:36', activity: '地鐵烏丸線 (往竹田)', details: '烏丸御池14:36 京都14:41', transport: '地鐵', duration: '5min', type: '交通', dep_time: '14:36', arr_time: '14:41', dep_loc: '烏丸御池', arr_loc: '京都', note: '' },
+
+                { id: 'd4_14_wait', time: '14:41', activity: '轉乘及等候 JR京都線', details: '抵達京都站，等候 15:00 新快速列車', transport: '等待', duration: '19min', type: '彈性', dep_time: '14:41', arr_time: '15:00', dep_loc: '京都', arr_loc: '京都', note: '轉乘JR京都線15:00班次' },
+
+                { id: 'd4_14', time: '15:00', activity: 'JR京都線 新快速 (往姬路經湖西線)', details: '京都15:00 大阪15:28\n(往姬路經湖西線)', transport: 'JR', duration: '28min', type: '交通', dep_time: '15:00', arr_time: '15:28', dep_loc: '京都', arr_loc: '大阪', note: '新快速' },
+
+                { id: 'd4_15_walk', time: '15:28', activity: '步行轉乘 (往地鐵御堂筋線)', details: '步行10min到地鐵御堂筋線\n(人多則搭計程車)', transport: '步行', duration: '10min', type: '交通', dep_time: '15:28', arr_time: '15:38', dep_loc: '大阪', arr_loc: '梅田', note: '' },
+                
+                { id: 'd4_15_wait', time: '15:38', activity: '步行後等候 地鐵御堂筋線', details: '等候緩衝時間 (預留 10 分鐘)', transport: '等待', duration: '10min', type: '彈性', dep_time: '15:38', arr_time: '15:48', dep_loc: '梅田', arr_loc: '梅田', note: '等待地鐵御堂筋線15:48 班次<br>人多則搭計程車' },
+
+                { id: 'd4_16', time: '15:48', activity: '地鐵御堂筋線 (往中百舌鳥)', details: '梅田15:48 本町15:53', transport: '地鐵', duration: '5min', type: '交通', dep_time: '15:48', arr_time: '15:53', dep_loc: '梅田', arr_loc: '本町', note: '' },
+
+                { id: 'd4_17_wait', time: '15:53', activity: '轉乘及等候 地鐵中央線', details: '本町站轉乘 (OR 步行15min)', transport: '等待', duration: '8min', type: '彈性', dep_time: '15:53', arr_time: '16:01', dep_loc: '本町', arr_loc: '本町', note: '轉乘地鐵中央線16:01班次<br>OR步行15min' },
+
+                { id: 'd4_18', time: '16:01', activity: '地鐵中央線 (往學研奈良登美丘)', details: '本町16:01 堺筋本町16:02', transport: '地鐵', duration: '1min', type: '交通', dep_time: '16:01', arr_time: '16:02', dep_loc: '本町', arr_loc: '堺筋本町', note: '' },
+
+                { id: 'd4_19', time: '16:02', activity: '步行 (往酒店)', details: '步行5min到大阪本町都城市酒店', transport: '步行', duration: '8min', type: '交通', dep_time: '16:02', arr_time: '16:10', dep_loc: '堺筋本町', arr_loc: '酒店', note: '' },
+
+                // --- 大阪酒店與晚餐 ---
+                { id: 'd4_20', time: '16:10', activity: '大阪本町都城市酒店', details: 'Check-in 休息\n(預計 17:40 出發前往晚餐)', transport: '住宿', duration: '1hr 30min', type: '住宿', dep_time: '16:10', arr_time: '17:40', dep_loc: '酒店', arr_loc: '出發', note: '休息片刻' },
+
+                { id: 'd4_21_walk', time: '17:40', activity: '步行 (往敘敘苑)', details: '步行20min到敘敘苑', transport: '步行', duration: '20min', type: '交通', dep_time: '17:40', arr_time: '18:00', dep_loc: '酒店', arr_loc: '敘敘苑', note: '' },
+
+                { id: 'd4_21', time: '18:00', activity: '敘敘苑 大丸心齋橋店', details: '晚餐2hr', transport: '停留', duration: '2hr', type: '吃飯', dep_time: '18:00', arr_time: '20:00', dep_loc: '敘敘苑', arr_loc: '敘敘苑', note: '訂位18:00' },
+
+                { id: 'd4_22_walk', time: '20:00', activity: '步行 (回酒店)', details: '步行20min到大阪本町都城市酒店', transport: '步行', duration: '20min', type: '交通', dep_time: '20:00', arr_time: '20:20', dep_loc: '敘敘苑', arr_loc: '酒店', note: '' },
+
+                { id: 'd4_22', time: '20:20', activity: '大阪本町都城市酒店', details: '回到酒店休息/自由活動', transport: '住宿', duration: 'N/A', type: '住宿', dep_time: '20:20', arr_time: 'N/A', dep_loc: '酒店', arr_loc: 'N/A', note: '結束 Day 4' },
+            ],
+            "Day5": [
+                { id: 'd5_0', time: '07:30', activity: '大阪本町都城市酒店', details: '早上從酒店出發', transport: '住宿', duration: '0min', type: '住宿', dep_time: '07:30', arr_time: '07:30', dep_loc: '酒店', arr_loc: '酒店', note: '開始 Day 5' },
+                // V22 修正：步行 15min 到地鐵站 (07:30 -> 07:45)
+                { id: 'd5_0_walk', time: '07:30', activity: '步行 (往地鐵御堂筋線)', details: '步行15min到地鐵御堂筋線', transport: '步行', duration: '15min', type: '交通', dep_time: '07:30', arr_time: '07:45', dep_loc: '酒店', arr_loc: '地鐵站', note: '' },
+                // V22 修正：等待緩衝 4min (07:45 -> 07:49)
+                { id: 'd5_0_wait', time: '07:45', activity: '步行後等候 地鐵御堂筋線', details: '等候緩衝時間 (預留 4 分鐘)', transport: '等待', duration: '4min', type: '彈性', dep_time: '07:45', arr_time: '07:49', dep_loc: '地鐵站', arr_loc: '地鐵站', note: '等待地鐵御堂筋線07:49班次' },
+                { id: 'd5_1', time: '07:49', activity: '地鐵御堂筋線/北大阪急行線 (往箕面萱野)', details: '本町07:49 江坂箕面萱野08:20', transport: '地鐵', duration: '31min', type: '交通', dep_time: '07:49', arr_time: '08:20', dep_loc: '本町', arr_loc: '箕面萱野', note: '搭乘御堂筋線至江坂接續北大阪急行線' },
+                // V21 修正：將步行與等待時間分離
+                { id: 'd5_2_walk', time: '08:20', activity: '步行 (轉乘公車)', details: '步行10min到公車站', transport: '步行', duration: '10min', type: '交通', dep_time: '08:20', arr_time: '08:30', dep_loc: '箕面萱野', arr_loc: '公車站', note: '' },
+                { id: 'd5_2_wait', time: '08:30', activity: '步行後等候 30 Bus (往勝尾寺)', details: '等候緩衝時間 (等候 09:00 班次)', transport: '等待', duration: '30min', type: '彈性', dep_time: '08:30', arr_time: '09:00', dep_loc: '公車站', arr_loc: '公車站', note: '8號乘車處等待30 Bus 09:00班次' },
+                { id: 'd5_2', time: '09:00', activity: '30 Bus (往勝尾寺)', details: '箕面萱野09:00 勝尾寺09:22', transport: '公車', duration: '22min', type: '交通', dep_time: '09:00', arr_time: '09:22', dep_loc: '箕面萱野', arr_loc: '勝尾寺', note: '8號乘車處' },
+                { id: 'd5_3', time: '09:25', activity: '勝尾寺', details: '參觀 2hr \n30 bus (往箕面萱野站)', transport: '停留', duration: '2hr ', type: '景點', dep_time: '09:25', arr_time: '11:25', dep_loc: '勝尾寺', arr_loc: '勝尾寺', note: '達摩寺 / 滿滿的勝利達摩' },
+                { id: 'd5_2_wait', time: '11:25', activity: '步行後等候 30 Bus (往箕面萱野站)', details: '等候緩衝時間 (等候 11:50 班次)', transport: '等待', duration: '25min', type: '彈性', dep_time: '11:25', arr_time: '11:50', dep_loc: '公車站', arr_loc: '公車站', note: '等待30 Bus 11:50班次' },
+                { id: 'd5_4', time: '11:50', activity: '30 Bus (往箕面萱野)', details: '勝尾寺11:50 箕面萱野12:11', transport: '公車', duration: '21min', type: '交通', dep_time: '11:50', arr_time: '12:11', dep_loc: '勝尾寺', arr_loc: '箕面萱野', note: '' },
+                // V21 修正：將步行與等待時間分離
+                { id: 'd5_5_walk', time: '12:11', activity: '步行 (轉乘地鐵)', details: '步行10min到地鐵北大阪急行線', transport: '步行', duration: '10min', type: '交通', dep_time: '12:11', arr_time: '12:21', dep_loc: '箕面萱野', arr_loc: '箕面萱野站', note: '' },
+                { id: 'd5_5_walk_wait', time: '12:21', activity: '步行後等候 地鐵北大阪急行線', details: '等候緩衝時間 (預留 6 分鐘)', transport: '等待', duration: '6min', type: '彈性', dep_time: '12:21', arr_time: '12:27', dep_loc: '箕面萱野站', arr_loc: '箕面萱野站', note: '等待北大阪急行線12:27班次' },
+                { id: 'd5_5', time: '12:27', activity: '地鐵北大阪急行線/御堂筋線 (往中百舌鳥)', details: '箕面萱野12:27 江坂 本町12:57', transport: '地鐵', duration: '30min', type: '交通', dep_time: '12:27', arr_time: '12:57', dep_loc: '箕面萱野', arr_loc: '本町', note: '搭乘北大阪急行線至江坂接續御堂筋線' },
+                // V20 新增：等待地鐵中央線 (4min)
+                { id: 'd5_5_wait', time: '12:57', activity: '轉乘及等候 地鐵中央線', details: '抵達本町，等候 13:01 的地鐵中央線', transport: '等待', duration: '4min', type: '彈性', dep_time: '12:57', arr_time: '13:01', dep_loc: '本町', arr_loc: '本町', note: '轉乘地鐵中央線13:01班次' },
+                { id: 'd5_6', time: '13:01', activity: '地鐵中央線 (往生駒)', details: '本町13:01 谷町四丁目13:04', transport: '地鐵', duration: '3min', type: '交通', dep_time: '13:01', arr_time: '13:04', dep_loc: '本町', arr_loc: '谷町四丁目', note: '' },
+                { id: 'd5_6_walk', time: '13:04', activity: '步行 (往咖喱店)', details: '步行6min到咖喱店', transport: '步行', duration: '6min', type: '交通', dep_time: '13:04', arr_time: '13:10', dep_loc: '谷町四丁目', arr_loc: '咖喱店', note: '' },
+                { id: 'd5_7', time: '13:10', activity: '呑めるカレーハウス インディー内本町店', details: '午餐1hr ', transport: '停留', duration: '1hr ', type: '吃飯', dep_time: '13:10', arr_time: '14:10', dep_loc: '咖喱店', arr_loc: '咖喱店', note: '日式咖哩' },
+                { id: 'd5_8_walk', time: '14:10', activity: '步行 (往大阪城)', details: '步行20min到大阪城', transport: '步行', duration: '20min', type: '交通', dep_time: '14:10', arr_time: '14:30', dep_loc: '咖喱店', arr_loc: '大阪城', note: '' },
+                { id: 'd5_8', time: '14:30', activity: '大阪城', details: '參觀2hr ', transport: '停留', duration: '2hr ', type: '景點', dep_time: '14:30', arr_time: '16:30', dep_loc: '大阪城', arr_loc: '大阪城', note: '豐臣秀吉的城堡' },
+                { id: 'd5_9_walk', time: '16:30', activity: '步行 (往地鐵谷町線)', details: '步行20min到地鐵谷町線', transport: '步行', duration: '20min', type: '交通', dep_time: '16:30', arr_time: '16:50', dep_loc: '大阪城', arr_loc: '谷町四丁目', note: '' },
+                { id: 'd5_9_wait', time: '16:50', activity: '步行後等候 地鐵谷町線', details: '等候緩衝時間 (預留 10 分鐘)', transport: '等待', duration: '10min', type: '彈性', dep_time: '16:50', arr_time: '17:00', dep_loc: '谷町四丁目', arr_loc: '谷町四丁目', note: '等待地鐵谷町線17:00班次' },
+                { id: 'd5_9', time: '17:00', activity: '地鐵谷町線 (往喜連瓜破)', details: '谷町四丁目17:00 天王寺17:07', transport: '地鐵', duration: '7min', type: '交通', dep_time: '17:00', arr_time: '17:07', dep_loc: '谷町四丁目', arr_loc: '天王寺', note: '' },
+                { id: 'd5_10_walk', time: '17:07', activity: '步行 (往阿倍野HARUKAS)', details: '步行3min到阿倍野HARUKAS', transport: '步行', duration: '3min', type: '交通', dep_time: '17:07', arr_time: '17:10', dep_loc: '天王寺', arr_loc: '阿倍野HARUKAS', note: '' },
+                { id: 'd5_10', time: '17:10', activity: '阿倍野HARUKAS', details: '看夜景1.5hr', transport: '停留', duration: '1hr 30min', type: '景點', dep_time: '17:10', arr_time: '18:40', dep_loc: '阿倍野HARUKAS', arr_loc: '阿倍野HARUKAS', note: '大阪最高的摩天大樓' },
+                { id: 'd5_11_walk', time: '18:40', activity: '步行 (往地鐵谷町線)', details: '步行3min到地鐵谷町線', transport: '步行', duration: '3min', type: '交通', dep_time: '18:40', arr_time: '18:43', dep_loc: '阿倍野HARUKAS', arr_loc: '天王寺', note: '' },
+                { id: 'd5_11_wait', time: '18:43', activity: '步行後等候 地鐵谷町線', details: '等候緩衝時間 (預留 1 分鐘)', transport: '等待', duration: '1min', type: '彈性', dep_time: '18:43', arr_time: '18:44', dep_loc: '天王寺', arr_loc: '天王寺', note: '等待地鐵谷町線18:44班次' },
+                { id: 'd5_11', time: '18:44', activity: '地鐵谷町線 (往都島)', details: '天王寺18:44 谷町九丁目18:48', transport: '地鐵', duration: '4min', type: '交通', dep_time: '18:44', arr_time: '18:48', dep_loc: '天王寺', arr_loc: '谷町九丁目', note: '' },
+                { id: 'd5_12_wait', time: '18:48', activity: '轉乘及等候 地鐵千日前線', details: '等候緩衝時間 (預留 5 分鐘)', transport: '等待', duration: '5min', type: '彈性', dep_time: '18:48', arr_time: '18:53', dep_loc: '地鐵站', arr_loc: '地鐵站', note: '轉乘地鐵千日前線18:53班次' },
+                { id: 'd5_12', time: '18:53', activity: '地鐵千日前線 (往野田阪神)', details: '谷町九丁目18:53 日本橋18:54', transport: '地鐵', duration: '1min', type: '交通', dep_time: '18:53', arr_time: '18:54', dep_loc: '谷町九丁目', arr_loc: '日本橋', note: '' },
+                { id: 'd5_13', time: '18:54', activity: '步行 (往牛舌檸檬)', details: '步行6min到牛舌檸檬', transport: '步行', duration: '6min', type: '交通', dep_time: '18:54', arr_time: '19:00', dep_loc: '日本橋', arr_loc: '牛舌檸檬', note: '' },
+                { id: 'd5_14', time: '19:00', activity: '新宿焼肉 牛たんの檸檬大阪本店', details: '晚餐1hr', transport: '停留', duration: '1hr ', type: '吃飯', dep_time: '19:00', arr_time: '20:00', dep_loc: '牛舌檸檬', arr_loc: '牛舌檸檬', note: '預計用餐1小時' },
+                { id: 'd5_15_walk', time: '20:00', activity: '步行 (往地鐵堺筋線)', details: '步行5min到地鐵堺筋線', transport: '步行', duration: '5min', type: '交通', dep_time: '20:00', arr_time: '20:05', dep_loc: '牛舌檸檬', arr_loc: '日本橋', note: '' },
+                { id: 'd5_15_wait', time: '20:05', activity: '步行後等候 地鐵堺筋線', details: '等候緩衝時間 (預留 6 分鐘)', transport: '等待', duration: '6min', type: '彈性', dep_time: '20:05', arr_time: '20:11', dep_loc: '日本橋', arr_loc: '日本橋', note: '等待地鐵堺筋線20:11班次' },
+                { id: 'd5_15', time: '20:11', activity: '地鐵堺筋線 (往北千里)', details: '日本橋20:11 堺筋本町20:14', transport: '地鐵', duration: '3min', type: '交通', dep_time: '20:11', arr_time: '20:14', dep_loc: '日本橋', arr_loc: '堺筋本町', note: '' },
+                { id: 'd5_16', time: '20:14', activity: '步行 (回酒店)', details: '步行6min到大阪本町都城市酒店', transport: '步行', duration: '6min', type: '交通', dep_time: '20:14', arr_time: '20:20', dep_loc: '堺筋本町', arr_loc: '酒店', note: '' },
+                { id: 'd5_17', time: '20:20', activity: '大阪本町都城市酒店', details: '回到酒店休息/自由活動', transport: '住宿', duration: 'N/A', type: '住宿', dep_time: '20:20', arr_time: 'N/A', dep_loc: '酒店', arr_loc: 'N/A', note: '結束 Day 5' },
+            ],
+            "Day6": [
+                { id: 'd6_0', time: '09:40', activity: '大阪本町都城市酒店', details: '早上從酒店出發', transport: '住宿', duration: '0min', type: '住宿', dep_time: '09:40', arr_time: '09:40', dep_loc: '酒店', arr_loc: '酒店', note: '開始 Day 6' },
+                // V22 修正：步行 20min 到心齋橋商店街 (09:40 -> 10:00)
+                { id: 'd6_1_walk', time: '09:40', activity: '步行 (往心齋橋筋商店街)', details: '步行20min到心齋橋', transport: '步行', duration: '20min', type: '交通', dep_time: '09:40', arr_time: '10:00', dep_loc: '酒店', arr_loc: '心齋橋', note: '' },
+                { id: 'd6_1', time: '10:00', activity: '心齋橋筋商店街 (上午)', details: '營業時間11:00\n閒晃1hr', transport: '停留', duration: '1hr', type: '逛街', dep_time: '10:00', arr_time: '11:00', dep_loc: '心齋橋筋商店街', arr_loc: '心齋橋筋商店街', note: '部分店家 11:00才營業' },
+                { id: 'd6_2', time: '11:00', activity: '味乃家御好燒 (午餐)', details: '午餐1hr', transport: '停留', duration: '1hr', type: '吃飯', dep_time: '11:00', arr_time: '12:00', dep_loc: '味乃家御好燒', arr_loc: '味乃家御好燒', note: '必吃大阪燒 (或大阪燒千房)' },
+                { id: 'd6_3', time: '12:00', activity: '心齋橋筋商店街 (下午)', details: '打烊時間20:00\n逛街7hr', transport: '停留', duration: '7hr', type: '逛街', dep_time: '12:00', arr_time: '19:00', dep_loc: '心齋橋筋商店街', arr_loc: '心齋橋筋商店街', note: '瘋狂購物時間' },
+                { id: 'd6_4', time: '19:00', activity: '晚餐 (道頓崛美食)', details: '晚餐1hr\n路邊攤隨便吃', transport: '停留', duration: '1hr', type: '吃飯', dep_time: '19:00', arr_time: '20:00', dep_loc: '道頓崛', arr_loc: '道頓崛', note: '嘗試道頓堀周邊美食' },
+                { id: 'd6_5', time: '20:00', activity: '步行 (回酒店)', details: '步行20min回大阪本町都城市酒店', transport: '步行', duration: '20min', type: '交通', dep_time: '20:00', arr_time: '20:20', dep_loc: '心齋橋', arr_loc: '酒店', note: '' },
+                { id: 'd6_6', time: '20:20', activity: '大阪本町都城市酒店', details: '回到酒店休息/自由活動', transport: '住宿', duration: 'N/A', type: '住宿', dep_time: '20:20', arr_time: 'N/A', dep_loc: '酒店', arr_loc: 'N/A', note: '結束 Day 6' },
+            ],
+            "Day7": [
+                // V23 修正：Check-out 結束時間調整為 07:50
+                { id: 'd7_0', time: '07:50', activity: '大阪本町都城市酒店', details: 'Check-out辦理退房手續並準備前往機場', transport: '住宿', duration: '0min', type: '住宿', dep_time: '07:50', arr_time: '07:50', dep_loc: '酒店', arr_loc: '酒店', note: '開始 Day 7 ' },
+                // V23 修正：步行時間改為 07:50 -> 07:55
+                { id: 'd7_1_walk', time: '07:50', activity: '步行 (往地鐵中央線)', details: '步行5min到地鐵中央線', transport: '步行', duration: '5min', type: '交通', dep_time: '07:50', arr_time: '07:55', dep_loc: '酒店', arr_loc: '堺筋本町', note: '' },
+                // V23 修正：等待緩衝時間改為 07:55 -> 08:13 (18min)
+                { id: 'd7_1_wait', time: '07:55', activity: '步行後等候 地鐵中央線 ', details: '等候緩衝時間 (預留 18 分鐘)', transport: '等待', duration: '18min', type: '彈性', dep_time: '07:55', arr_time: '08:13', dep_loc: '堺筋本町', arr_loc: '堺筋本町', note: '等待地鐵中央線08:13班次<br> OR搭乘計程車前往南海難波' },
+                { id: 'd7_1', time: '08:13', activity: '地鐵中央線 (往夢洲)', details: '堺筋本町08:13 本町08:14', transport: '地鐵', duration: '1min', type: '交通', dep_time: '08:13', arr_time: '08:14', dep_loc: '堺筋本町', arr_loc: '本町', note: '' },
+                { id: 'd7_2_wait', time: '08:14', activity: '轉乘及等候 地鐵御堂筋線', details: '抵達本町，等候 08:14 的地鐵御堂筋線', transport: '等待', duration: '5min', type: '彈性', dep_time: '08:14', arr_time: '08:19', dep_loc: '本町', arr_loc: '本町', note: '轉乘地鐵御堂筋線08:19班次' },
+                { id: 'd7_2', time: '08:19', activity: '地鐵御堂筋線 (往中百舌鳥)', details: '本町08:19 難波08:22', transport: '地鐵', duration: '3min', type: '交通', dep_time: '08:19', arr_time: '08:22', dep_loc: '本町', arr_loc: '難波', note: '' },
+                // V21 修正：將步行與等候時間分離
+                { id: 'd7_3_walk', time: '08:22', activity: '步行轉乘 (往南海難波)', details: '步行10min到南海難波站', transport: '步行', duration: '10min', type: '交通', dep_time: '08:22', arr_time: '08:32', dep_loc: '難波地鐵站', arr_loc: '南海難波', note: '' },
+                { id: 'd7_3_wait', time: '08:32', activity: '轉乘及等候 南海電鐵', details: '抵達南海難波，等候 09:00 班次', transport: '等待', duration: '28min', type: '彈性', dep_time: '08:32', arr_time: '09:00', dep_loc: '南海難波', arr_loc: '南海難波', note: '等待南海特急09:00班次 （搭乘計程車提早到 則搭乘08:30班次）' },
+                { id: 'd7_4', time: '09:00', activity: '南海特急 (往關西機場)', details: '南海難波09:00 關西機場09:38', transport: '電車', duration: '38min', type: '交通', dep_time: '09:00', arr_time: '09:38', dep_loc: '南海難波', arr_loc: '關西機場', note: 'KLOOK購買南海電鐵特急車票 線上劃位' },
+                { id: 'd7_5', time: '09:40', activity: '關西國際機場T1 報到', details: '中華航空CI0153\n預計 14:30 關西起飛，需提前報到', transport: '停留', duration: '4hr 50min', type: '彈性', dep_time: '09:40', arr_time: '14:30', dep_loc: '機場T1', arr_loc: '登機口', note: '國際航班請預留充足時間報到/安檢' },
+                { id: 'd7_6', time: '14:30', activity: '中華航空CI0153 (飛往桃園)', details: '關西14:30 桃園16:45', transport: '飛機', duration: '2hr 15min', type: '交通', dep_time: '14:30', arr_time: '16:45', dep_loc: '關西', arr_loc: '桃園T2', note: '回程班機' },
+                { id: 'd7_7', time: '16:45', activity: '桃園國際機場T2 入境', details: '約停留2hr出關', transport: '停留', duration: '15min', type: '彈性', dep_time: '16:45', arr_time: '18:45', dep_loc: '桃園T2', arr_loc: '機捷', note: '' },
+                { id: 'd7_8', time: '18:45', activity: '機捷 (往高鐵桃園)', details: '機場第二航廈N/A ➡ A18高鐵桃園N/A', transport: '機捷', duration: '21min', type: '交通', dep_time: 'N/A', arr_time: 'N/A', dep_loc: '機場T2', arr_loc: 'A18高鐵桃園', note: '' },
+                { id: 'd7_9', time: 'N/A', activity: '台灣高鐵 (往台中)', details: '高鐵 桃園➡ 台中', transport: '高鐵', duration: '40min', type: '交通', dep_time: 'N/A', arr_time: 'N/A', dep_loc: '高鐵桃園站', arr_loc: '高鐵台中站', note: '高鐵票需另行購買' },
+                { id: 'd7_10', time: 'N/A', activity: '溫暖的家 / End', details: '旅程結束', transport: '停留', duration: 'N/A', type: '彈性', dep_time: 'N/A', arr_time: 'N/A', dep_loc: '高鐵台中站', arr_loc: '家', note: '結束旅程' },
+            ]
+        };
+
+        const DATE_MAP = {
+            'Day1': '01/11(日)', 'Day2': '01/12(一)', 'Day3': '01/13(二)', 'Day4': '01/14(三)',
+            'Day5': '01/15(四)', 'Day6': '01/16(五)', 'Day7': '01/17(六)'
+        };
+        const DAY_KEYS = ['Day1', 'Day2', 'Day3', 'Day4', 'Day5', 'Day6', 'Day7'];
+
+        // --- 2. 核心邏輯 ---
+        let currentPageIndex = -1; // -1: 封面, 0-6: Days, 7: 封底
+        const totalPages = DAY_KEYS.length + 1; // 7 Days + Back Cover
+
+        function initBook() {
+            const book = document.getElementById('book');
+            book.innerHTML = '';
+
+            // 1. 封面
+            const cover = document.createElement('div');
+            cover.className = 'page cover-page z-top';
+            cover.id = 'page-cover';
+            cover.innerHTML = `
+                <div>
+                    <div class="sticker">2026 EDITION</div>
+                    <h1 class="cover-title">KYOTO<br>& OSAKA<br>GOGO</h1>
+                    <div class="cover-subtitle">WINTER TRIP ITINERARY</div>
+                </div>
+                <div class="cover-footer">
+                    <div class="text-3xl mb-2"><i class="fas fa-plane-departure"></i></div>
+                    <div>TRAVEL GUIDEBOOK</div>
+                    <div class="text-xs mt-1">TAP TO OPEN</div>
+                </div>
+            `;
+            cover.onclick = () => flipPage(1);
+            book.appendChild(cover);
+
+            // 2. 內頁 (Day 1 - Day 7)
+            DAY_KEYS.forEach((dayKey, index) => {
+                const page = document.createElement('div');
+                page.className = `page z-mid`;
+                page.id = `page-${index}`;
+                // 初始位置設定
+                page.style.zIndex = 5 - index; // 簡單層級
+
+                const dayData = itineraryData[dayKey];
+                const dateStr = DATE_MAP[dayKey];
+                
+                let contentHtml = dayData.map(item => createItineraryItem(item, dayKey)).join('');
+
+                page.innerHTML = `
+                    <div class="page-content">
+                        <div class="day-header">
+                            <div class="flex justify-between items-end border-b border-slate-300 pb-2">
+                                <div>
+                                    <div class="day-date">${dateStr}</div>
+                                    <h2 class="day-title">${dayKey.replace('Day', 'Day ')}</h2>
+                                </div>
+                                <div class="text-4xl text-slate-200 opacity-50 font-black italic">
+                                    ${index + 1}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-wrapper">
+                            <div class="timeline-line"></div>
+                            ${contentHtml}
+                        </div>
+                    </div>
+                    <div class="page-number">- ${index + 1} -</div>
+                `;
+                book.appendChild(page);
+            });
+
+            // 3. 封底
+            const backCover = document.createElement('div');
+            backCover.className = 'page cover-page z-bot';
+            backCover.id = 'page-back';
+            backCover.style.background = '#1a253a';
+            backCover.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full">
+                    <h2 class="text-2xl font-bold mb-4">HAVE A NICE TRIP</h2>
+                    <div class="text-4xl mb-6">✈️</div>
+                    <p class="text-sm opacity-50">Designed for 2026 Winter</p>
+                    <button class="mt-8 px-6 py-2 border border-white/30 rounded-full hover:bg-white/10" onclick="flipPage(-8)">
+                        Restart
+                    </button>
+                </div>
+            `;
+            book.appendChild(backCover);
+
+            updateZIndexes();
+        }
+
+        // --- 輔助函數：生成單個行程項目 HTML ---
+        function createItineraryItem(item, dayKey) {
+            const isTransit = item.type === '交通' || item.transport === '步行';
+            const isWait = item.transport === '等待';
+            
+            let cardTypeClass = 'type-location';
+            let tagClass = 'tag-location';
+            let icon = '📌';
+
+            if (isTransit) {
+                cardTypeClass = 'type-transit';
+                tagClass = 'tag-transit';
+                icon = getTransportIcon(item.transport);
+            } else if (isWait) {
+                cardTypeClass = 'type-wait';
+                tagClass = 'tag-wait';
+                icon = '⏳';
+            } else {
+                icon = getActionIcon(item.type);
+            }
+
+            // 記帳檢查
+            const expense = ExpenseManager.getExpense(item.id);
+            const expenseHtml = expense ? `<div class="expense-dot"></div>` : '';
+
+            // 詳情處理
+            const details = item.details.replace(/\n/g, '<br>');
+
+            return `
+                <div class="itinerary-item">
+                    <div class="time-bubble">
+                        <div class="time-text">${item.time}</div>
+                        ${item.duration && item.duration !== 'N/A' ? `<div class="text-[10px] text-slate-400 font-medium mt-1">${item.duration}</div>` : ''}
+                    </div>
+                    <div class="node-dot"></div>
+                    
+                    <div class="card ${cardTypeClass}" onclick="openExpenseModal('${item.id}', '${item.activity}')">
+                        ${expenseHtml}
+                        <div class="card-header">
+                            <div class="flex items-center">
+                                <span class="card-icon">${icon}</span>
+                                <span class="card-title">${item.activity}</span>
+                            </div>
+                            <span class="card-tag ${tagClass}">${item.transport}</span>
+                        </div>
+                        
+                        ${isTransit ? `
+                            <div class="transit-info">
+                                <div class="text-center">
+                                    <div class="font-bold text-slate-700">${item.dep_time}</div>
+                                    <div class="text-[10px] text-slate-500">${item.dep_loc || '起點'}</div>
+                                </div>
+                                <div class="text-slate-400"><i class="fas fa-arrow-right"></i></div>
+                                <div class="text-center">
+                                    <div class="font-bold text-slate-700">${item.arr_time}</div>
+                                    <div class="text-[10px] text-slate-500">${item.arr_loc || '終點'}</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="card-detail">${details}</div>
+                        `}
+
+                        ${item.note ? `<div class="card-note"><i class="far fa-comment-dots mr-1"></i> ${item.note}</div>` : ''}
+                        
+                        ${!isTransit && !isWait ? `
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex justify-end">
+                            <a href="${getMapLink(item.activity, dayKey)}" target="_blank" onclick="event.stopPropagation()" class="text-blue-500 text-xs font-bold hover:underline">
+                                <i class="fas fa-map-marker-alt mr-1"></i>地圖
+                            </a>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 翻頁核心 ---
+        function flipPage(direction) {
+            const newIndex = currentPageIndex + direction;
+
+            // 邊界檢查
+            if (newIndex < -1 || newIndex > 7) return;
+
+            // 播放音效 (可選)
+            // const audio = new Audio('page-flip.mp3'); audio.play();
+
+            currentPageIndex = newIndex;
+            updateBookView();
+        }
+
+        function updateBookView() {
+            // 封面
+            const cover = document.getElementById('page-cover');
+            if (currentPageIndex >= 0) {
+                cover.classList.add('flipped');
+            } else {
+                cover.classList.remove('flipped');
+            }
+
+            // 內頁
+            DAY_KEYS.forEach((_, index) => {
+                const page = document.getElementById(`page-${index}`);
+                if (index <= currentPageIndex && currentPageIndex >= 0) {
+                    // 如果當前頁面索引大於此頁，代表此頁已經翻過去了
+                    // 但我們需要顯示的是 currentPageIndex 對應的那一頁
+                    // 修正邏輯：currentPageIndex 0 = Day1 顯示中。
+                    // 翻頁邏輯是：所有 index < currentPageIndex 的頁面都要 flipped
+                    
+                    // 實際邏輯：
+                    // -1: 封面在右 (未翻)
+                    // 0: 封面翻左，Day1 在右 (未翻)
+                    // 1: Day1 翻左，Day2 在右...
+                }
+                
+                if (index < currentPageIndex) {
+                    page.classList.add('flipped');
+                } else {
+                    page.classList.remove('flipped');
+                }
+            });
+            
+            // 導航按鈕狀態
+            document.getElementById('prevBtn').disabled = (currentPageIndex === -1);
+            document.getElementById('nextBtn').disabled = (currentPageIndex === 7);
+            
+            updateZIndexes();
+        }
+
+        function updateZIndexes() {
+            // 動態調整 Z-index 確保陰影層次正確
+            const cover = document.getElementById('page-cover');
+            
+            if (currentPageIndex === -1) {
+                cover.style.zIndex = 20;
+                DAY_KEYS.forEach((_, i) => {
+                    document.getElementById(`page-${i}`).style.zIndex = 10 - i;
+                });
+            } else {
+                cover.style.zIndex = 1;
+                DAY_KEYS.forEach((_, i) => {
+                    const page = document.getElementById(`page-${i}`);
+                    if (i < currentPageIndex) {
+                        page.style.zIndex = i + 1; // 翻過去的頁面堆疊
+                    } else if (i === currentPageIndex) {
+                        page.style.zIndex = 20; // 當前頁最上
+                    } else {
+                        page.style.zIndex = 10 - (i - currentPageIndex); // 後面的頁面遞減
+                    }
+                });
+            }
+        }
+
+        // --- 輔助功能 ---
+        function getActionIcon(type) {
+            const icons = { '景點': '⛩️', '吃飯': '🍜', '逛街': '🛍️', '住宿': '🛌', '彈性': '⏳' };
+            return icons[type] || '📌';
+        }
+        function getTransportIcon(transport) {
+            if (transport.includes('飛機')) return '🛫';
+            if (transport.includes('JR') || transport.includes('高鐵')) return '🚄';
+            if (transport.includes('地鐵')) return '🚇';
+            if (transport.includes('公車') || transport.includes('Bus')) return '🚌';
+            if (transport.includes('步行')) return '👣';
+            return '🚊';
+        }
+        function getMapLink(activity, day) {
+            let query = activity + (['Day5','Day6','Day7'].includes(day) ? ' 大阪' : ' 京都');
+            return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+        }
+
+        // --- 記帳功能 (Local Storage) ---
+        const ExpenseManager = {
+            getKey: () => 'itinerary_expenses_booklet_v1',
+            getExpenses: () => JSON.parse(localStorage.getItem(ExpenseManager.getKey()) || '{}'),
+            saveExpense: (id, amount, category) => {
+                const expenses = ExpenseManager.getExpenses();
+                if (amount > 0) expenses[id] = { amount: parseInt(amount), category };
+                else delete expenses[id];
+                localStorage.setItem(ExpenseManager.getKey(), JSON.stringify(expenses));
+                initBook(); // 重新渲染以更新紅點，或只更新 DOM
+                updateBookView(); // 保持當前頁面狀態
+            },
+            getExpense: (id) => ExpenseManager.getExpenses()[id],
+            getSummary: () => {
+                const expenses = ExpenseManager.getExpenses();
+                const summary = { '交通': 0, '餐費': 0, '購物': 0, '景點': 0, '其他': 0, 'total': 0 };
+                Object.values(expenses).forEach(item => {
+                    const cat = summary[item.category] !== undefined ? item.category : '其他';
+                    summary[cat] += item.amount;
+                    summary.total += item.amount;
+                });
+                return summary;
+            }
+        };
+
+        // Modal Logic
+        let currentEditingId = null;
+        function openExpenseModal(id, title) {
+            currentEditingId = id;
+            const expense = ExpenseManager.getExpense(id);
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('expense-amount').value = expense ? expense.amount : '';
+            // Reset categories
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.classList.remove('bg-blue-100', 'border-blue-500', 'text-blue-700');
+                if ((expense && b.dataset.cat === expense.category) || (!expense && b.dataset.cat === '其他')) {
+                    b.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-700');
+                }
+            });
+            document.getElementById('expense-modal').classList.add('active');
+        }
+        function closeExpenseModal() { document.getElementById('expense-modal').classList.remove('active'); }
+        function selectCategory(btn) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('bg-blue-100', 'border-blue-500', 'text-blue-700'));
+            btn.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-700');
+        }
+        function saveCurrentExpense() {
+            const amount = document.getElementById('expense-amount').value;
+            const cat = document.querySelector('.cat-btn.bg-blue-100')?.dataset.cat || '其他';
+            ExpenseManager.saveExpense(currentEditingId, amount, cat);
+            closeExpenseModal();
+        }
+
+        function showSummary() {
+            const s = ExpenseManager.getSummary();
+            document.getElementById('summary-content').innerHTML = `
+                <div class="flex justify-between border-b border-dashed pb-1"><span>交通</span><span>¥${s['交通'].toLocaleString()}</span></div>
+                <div class="flex justify-between border-b border-dashed pb-1"><span>餐費</span><span>¥${s['餐費'].toLocaleString()}</span></div>
+                <div class="flex justify-between border-b border-dashed pb-1"><span>購物</span><span>¥${s['購物'].toLocaleString()}</span></div>
+                <div class="flex justify-between border-b border-dashed pb-1"><span>景點</span><span>¥${s['景點'].toLocaleString()}</span></div>
+                <div class="flex justify-between border-b border-dashed pb-1"><span>其他</span><span>¥${s['其他'].toLocaleString()}</span></div>
+                <div class="flex justify-between font-black text-lg text-blue-600 pt-2"><span>總計</span><span>¥${s.total.toLocaleString()}</span></div>
+            `;
+            document.getElementById('summary-modal').classList.add('active');
+        }
+        function closeSummaryModal() { document.getElementById('summary-modal').classList.remove('active'); }
+
+        // 雪花動畫
+        function createSnowflakes() {
+            const container = document.getElementById('snow-container');
+            for(let i=0; i<30; i++) {
+                const el = document.createElement('div');
+                el.classList.add('snowflake');
+                el.innerText = Math.random() > 0.5 ? '❄' : '•';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.top = -20 + 'px';
+                el.style.fontSize = (Math.random() * 15 + 10) + 'px';
+                el.style.opacity = Math.random() * 0.7;
+                el.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                el.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(el);
+            }
+        }
+
+        // 初始化
+        window.onload = () => {
+            initBook();
+            createSnowflakes();
+            
+            // 觸控滑動支援
+            let touchStartX = 0;
+            const bookEl = document.getElementById('book');
+            bookEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+            bookEl.addEventListener('touchend', e => {
+                const diff = e.changedTouches[0].screenX - touchStartX;
+                if (diff < -50) flipPage(1); // 左滑，下一頁
+                if (diff > 50) flipPage(-1); // 右滑，上一頁
+            });
+        };
+    </script>
+</body>
+</html>
